@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Closet AI — IndexedDB</title>
+<meta name="theme-color" content="#241c17">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%238a5a3b'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle'%3E👕%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<button class="menu-button" id="menuButton" title="Menu">☰</button>
+<nav class="menu-panel" id="menuPanel">
+  <button class="menu-item" data-target="modulesSection">🏠 Home e moduli</button>
+  <button class="menu-item" data-target="addSection">📷 Aggiungi capi</button>
+  <button class="menu-item" data-target="importSection">📂 Importa cartella</button>
+  <button class="menu-item" data-target="lookStudio">✨ Crea un look</button>
+  <button class="menu-item" data-target="laundry">🧺 Lavatrice</button>
+  <button class="menu-item" data-target="luggagePlanner">🧳 Bagagli</button>
+  <button class="menu-item" data-target="backupSection">💾 Backup</button>
+  <button class="menu-item" data-target="instructions">📖 Istruzioni</button>
+  <button class="menu-item" data-target="inventory">📋 Inventario</button>
+</nav>
+<button class="key-button" id="keyButton" title="Impostazioni AI">🔑</button>
+
+<div class="modal-backdrop" id="aiModal">
+  <div class="modal">
+    <h2>🔑 Impostazioni AI</h2>
+    <p class="card-sub">Inserisci le chiavi e salva. Restano solo in questo browser, non sono incluse nei backup e le richieste partono direttamente dal tuo dispositivo: usa chiavi con quota limitata e non salvarle su dispositivi condivisi.</p>
+    <div class="form-grid">
+      <div><label>Modello Gemini</label><input id="mGeminiModel" value="gemini-2.5-flash-lite"></div>
+      <div><label>API key Gemini</label><input id="mGeminiKey" type="password" placeholder="API key Gemini"></div>
+      <div><label>Modello Groq</label><input id="mGroqModel" value="llama-3.1-8b-instant"></div>
+      <div><label>API key Groq</label><input id="mGroqKey" type="password" placeholder="API key Groq gratuita"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="closeAiModalBtn">Chiudi</button>
+      <button class="btn btn-brown" id="saveAiModalBtn">Salva</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero"><div class="hero-inner">
+<span class="eyebrow">✨ Smart Closet AI · IndexedDB</span>
+<h1>Tre armadi,<br>una valigia intelligente.</h1>
+<p>Gestisci capi e foto in locale con IndexedDB, organizza la lavatrice, crea look e prepara i bagagli. Include backup e ripristino.</p>
+<div class="hero-actions">
+<button class="btn btn-primary" onclick="openSection('addSection')">📷 Aggiungi capi</button>
+<button class="btn btn-ghost" onclick="openSection('lookStudio')">✨ Crea un look</button>
+<button class="btn btn-ghost" onclick="openSection('inventory')">📋 Mostra inventario</button>
+<button class="btn btn-ghost" onclick="openSection('laundry')">🧺 Apri lavatrice</button>
+<button class="btn btn-ghost" onclick="openSection('luggagePlanner')">🧳 Organizza bagagli</button>
+<button class="btn btn-ghost" onclick="openSection('backupSection')">💾 Backup</button>
+<button class="btn btn-ghost" onclick="openSection('instructions')">📖 Istruzioni</button>
+</div></div></header>
+
+<main>
+<section class="card accordion open" id="modulesSection">
+<div class="accordion-toggle" onclick="toggleAccordion('modulesSection')"><h2>Scegli il modulo</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub">Ogni modulo ha categorie, filtri e suggerimenti dedicati.</p>
+<div class="module-tabs">
+<div class="module-tab active" data-module="civile" onclick="setModule('civile')">👔 Civile</div>
+<div class="module-tab" data-module="militare" onclick="setModule('militare')">🎖️ Militare</div>
+<div class="module-tab" data-module="sportivo" onclick="setModule('sportivo')">🏃 Sportivo</div>
+</div></div></section>
+
+<section class="card accordion" id="lookStudio">
+<div class="accordion-toggle" onclick="toggleAccordion('lookStudio')"><h2>✨ Crea un look con Gemini o Groq</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub">Descrivi l’occasione e l’AI seleziona un outfit completo.</p>
+<div class="chips">
+<div class="chip" onclick="setLookPreset('Look sportivo-elegante per andare al lavoro')">Sportivo-elegante per lavoro</div>
+<div class="chip" onclick="setLookPreset('Look casual per un pomeriggio in città')">Casual in città</div>
+<div class="chip" onclick="setLookPreset('Look elegante per una cena')">Elegante per cena</div>
+<div class="chip" onclick="setLookPreset('Look comodo per viaggiare')">Comodo per viaggiare</div>
+<div class="chip" onclick="setLookPreset('Look sportivo per allenamento in palestra')">Sportivo per palestra</div>
+</div>
+<div class="field"><label>Cosa devo indossare?</label><textarea id="lookRequest" placeholder="Esempio: look sportivo-elegante per andare al lavoro"></textarea></div>
+<div class="form-grid"><div><label>Modulo</label><select id="lookModule"><option value="tutti">Tutti i moduli</option><option value="civile">Civile</option><option value="militare">Militare</option><option value="sportivo">Sportivo</option></select></div><div><label>Stagione</label><select id="lookSeason"><option value="autunno/inverno">Autunno/Inverno</option><option value="primavera/estate">Primavera/Estate</option></select></div><div><label>Motore AI</label><select id="lookEngine"><option value="gemini">Gemini</option><option value="groq">Groq</option></select></div></div>
+<button class="btn btn-brown" style="margin-top:14px" onclick="createLook()">✨ Crea look</button><div id="lookResult"></div></div></section>
+
+<div class="grid">
+<section class="card accordion" id="addSection">
+<div class="accordion-toggle" onclick="toggleAccordion('addSection')"><h2>Aggiungi un capo</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub" id="addSubtitle">Modulo civile selezionato.</p>
+<form id="addForm"><div class="form-grid">
+<div><label>Nome capo</label><input id="name" placeholder="Camicia bianca" required></div>
+<div><label>Marca</label><input id="brand" placeholder="Zara"></div>
+<div><label>Colore</label><input id="color" placeholder="Bianco"></div>
+<div><label>Taglia</label><input id="size" placeholder="M"></div>
+<div><label>Materiale</label><input id="material" placeholder="Cotone, lana, seta..."></div>
+<div><label>Categoria</label><select id="categoryId" required></select></div>
+<div><label>Tipo lavaggio</label><select id="washType"><option value="normali">Normali</option><option value="delicati">Delicati</option><option value="bianchi">Bianchi</option><option value="neri">Neri</option></select></div>
+<div><label>Etichetta lavaggio</label><select id="careLabel"><option value="30">Lavare a 30°C</option><option value="40">Lavare a 40°C</option><option value="60">Lavare a 60°C</option><option value="delicato">Lavaggio delicato</option><option value="mano">Lavaggio a mano</option><option value="non_lavare">Non lavare in acqua</option></select></div>
+<div><label>Foto</label><input id="photo" type="file" accept="image/*"></div>
+</div><button class="btn btn-brown" style="margin-top:14px">Aggiungi al modulo</button></form></div></section>
+
+<section class="card accordion" id="importSection">
+<div class="accordion-toggle" onclick="toggleAccordion('importSection')"><h2>Importa una cartella</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub">Formato: <code>Nome capo - Marca - Colore - Taglia.jpg</code></p>
+<input id="folderInput" type="file" webkitdirectory multiple accept="image/*"><div id="importStatus" class="note"></div></div></section>
+</div>
+
+<section class="card accordion" id="laundry">
+<div class="accordion-toggle" onclick="toggleAccordion('laundry')"><h2>🧺 Sezione lavatrice intelligente</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><div class="section-title"><p class="card-sub" style="margin:0">Capi divisi per ciclo, con suggerimenti dalle etichette.</p><span class="pill" id="laundryCount">0 capi</span></div><div id="laundryGroups"></div></div></section>
+
+<section class="card accordion" id="luggagePlanner">
+<div class="accordion-toggle" onclick="toggleAccordion('luggagePlanner')"><h2>🧳 Preparazione e Organizzazione Bagagli</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub">Configura i bagagli e genera un piano di distribuzione.</p>
+<div class="form-grid"><div><label>Tipo viaggio</label><select id="tripType"><option value="aereo">Aereo</option><option value="treno">Treno</option><option value="auto">Auto</option></select></div><div><label>Small 20-30L</label><input id="smallCount" type="number" min="0" max="5" value="1"></div><div><label>Medium 40-60L</label><input id="mediumCount" type="number" min="0" max="5" value="1"></div><div><label>Large 70-100L</label><input id="largeCount" type="number" min="0" max="5" value="0"></div></div>
+<div class="form-grid" style="margin-top:14px"><div><label>Oggetto</label><input id="itemName" placeholder="Caricatore"></div><div><label>Categoria</label><select id="itemCategory"><option value="abbigliamento">Abbigliamento</option><option value="igiene">Igiene</option><option value="elettronica">Elettronica</option><option value="documenti">Documenti</option><option value="salute">Salute</option><option value="altro">Altro</option></select></div><div><label>Peso kg</label><input id="itemWeight" type="number" min="0" step="0.1" value="0.5"></div><div><label>Volume L</label><input id="itemVolume" type="number" min="0" step="0.5" value="1"></div><div><label>Priorità</label><select id="itemPriority"><option value="essenziale">Essenziale</option><option value="importante">Importante</option><option value="opzionale">Opzionale</option></select></div><div><label>Fragile</label><select id="itemFragile"><option value="no">No</option><option value="si">Sì</option></select></div></div>
+<button class="btn btn-brown" style="margin-top:14px" onclick="addItem()">Aggiungi oggetto</button>
+<button class="btn btn-outline" style="margin-top:14px" onclick="generatePackingPlan()">🧳 Genera piano bagagli</button>
+<div id="packingSummary" class="note"></div><div id="luggageResults"></div></div></section>
+
+<section class="card accordion" id="backupSection">
+<div class="accordion-toggle" onclick="toggleAccordion('backupSection')"><h2>💾 Backup e ripristino</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub">Esporta capi, foto e bagagli in un file JSON. Puoi ripristinarli su questo o un altro dispositivo.</p>
+<button class="btn btn-brown" onclick="exportBackup()">💾 Esporta backup completo</button>
+<input id="restoreInput" type="file" accept="application/json" style="margin-top:14px">
+<p class="note">Il ripristino sostituisce i dati attuali con quelli del file di backup. Il file viene controllato prima di toccare i dati e, se vuoi, viene scaricata una copia di sicurezza.</p></div></section>
+
+<section class="card accordion" id="instructions">
+<div class="accordion-toggle" onclick="toggleAccordion('instructions')"><h2>📖 Istruzioni dell’app</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><p class="card-sub">Guida rapida a tutte le funzioni.</p>
+<ul class="instructions-list">
+<li><strong>Menu ☰:</strong> pulsante in alto a sinistra. Un clic apre le voci, un altro clic le richiude. Cliccando una voce si apre la sezione e il menu si chiude.</li>
+<li><strong>Archiviazione:</strong> capi e foto sono salvati in IndexedDB, in locale sul dispositivo.</li>
+<li><strong>Backup:</strong> esporta un file JSON con capi, foto e bagagli. Il ripristino controlla il file, ti chiede conferma e può scaricare prima una copia dei dati attuali.</li>
+<li><strong>Installazione:</strong> dal menu del browser scegli «Installa app» o «Aggiungi a schermata Home»: funziona anche offline (le AI richiedono connessione).</li>
+<li><strong>🔑 Impostazioni AI:</strong> pulsante in alto a destra per API key Gemini e Groq.</li>
+<li><strong>Categorie vestiario:</strong> scegli il modulo Civile, Militare o Sportivo, poi la categoria quando aggiungi un capo. Nell’inventario puoi filtrare per categoria e cambiarla con il pulsante «Categoria».</li>
+<li><strong>Ricontrolla categorie:</strong> propone i capi che stanno in una categoria troppo generica e ti lascia scegliere quali spostare.</li>
+<li><strong>Etichette lavaggio:</strong> 30°C, 40°C, 60°C, delicato, mano o non lavare in acqua.</li>
+<li><strong>Lavatrice:</strong> capi divisi in Delicati, Normali, Bianchi e Neri.</li>
+<li><strong>Importa cartella:</strong> formato <code>Nome capo - Marca - Colore - Taglia.jpg</code>. La categoria è suggerita dal nome del capo e puoi correggerla nella schermata di revisione prima di importare.</li>
+<li><strong>Look e abbinamenti:</strong> con Gemini oppure Groq.</li>
+<li><strong>Bagagli:</strong> Small, Medium e Large con piano di distribuzione.</li>
+</ul></div></section>
+
+<section class="card accordion" id="inventory">
+<div class="accordion-toggle" onclick="toggleAccordion('inventory')"><h2 id="inventoryTitle">Inventario civile</h2><span class="accordion-arrow">▾</span></div>
+<div class="accordion-body"><div class="section-title"><p class="card-sub" style="margin:0">Filtra e gestisci i capi.</p><span class="pill" id="countPill">0 capi</span></div>
+<div class="filters"><select id="filterStatus"><option value="">Tutti gli stati</option><option value="in_armadio">In armadio</option><option value="indossato">Indossato</option><option value="in_lavanderia">In lavanderia</option><option value="in_pulizia">In pulizia</option><option value="non_disponibile">Non disponibile</option><option value="ritirato">Ritirato</option></select><select id="filterCategory"><option value="">Tutte le categorie</option></select><select id="filterWash"><option value="">Tutti i lavaggi</option><option value="normali">Normali</option><option value="delicati">Delicati</option><option value="bianchi">Bianchi</option><option value="neri">Neri</option></select><input id="search" placeholder="Cerca"><button class="btn btn-outline" onclick="recheckCategories()">🔄 Ricontrolla categorie</button><button class="btn btn-outline" onclick="exportBackup()">Esporta backup</button></div><ul id="garmentList"></ul></div></section>
+</main>
+
+<footer>Smart Closet AI · IndexedDB · Backup locale · Gemini + Groq</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
